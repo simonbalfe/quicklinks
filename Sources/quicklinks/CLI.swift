@@ -9,9 +9,10 @@ enum CLI {
         usage: quicklinks [command]
 
           (no command)                 run the launcher app (--show opens the panel at launch)
-          list                         print every keyword and target
-          add <keyword> <target>       add or replace a link; target is a URL or a folder path
-          remove <keyword>             delete a link
+          list                         print every keyword and its targets (tab separated)
+          add <keyword> <target>...    add or replace a link; several targets make a group that opens together
+          append <keyword> <target>... add targets to a link, creating it if missing
+          remove <keyword> [target...] delete a link, or only the given targets from it
           open <keyword> [query...]    open a link now (folders open in the terminal app)
           apps [query]                 list the applications the launcher indexes
           set hotkey <spec>            e.g. option+space, cmd+shift+k (restart the app to apply)
@@ -39,6 +40,7 @@ enum CLI {
         switch command {
         case "list", "ls": try list()
         case "add": try add(rest)
+        case "append": try append(rest)
         case "remove", "rm": try remove(rest)
         case "open": try open(rest)
         case "apps": apps(rest)
@@ -52,28 +54,47 @@ enum CLI {
 
     private static func list() throws {
         let config = try ConfigStore.load()
-        for (keyword, target) in config.links.sorted(by: { $0.key < $1.key }) {
-            print("\(keyword)\t\(target)")
+        for (keyword, targets) in config.links.sorted(by: { $0.key < $1.key }) {
+            print(([keyword] + targets.values).joined(separator: "\t"))
         }
     }
 
     private static func add(_ arguments: [String]) throws {
-        guard arguments.count == 2 else { throw CLIError(message: "usage: quicklinks add <keyword> <target>") }
-        let keyword = arguments[0]
-        guard !keyword.contains(where: \.isWhitespace) else {
-            throw CLIError(message: "keyword must not contain whitespace")
+        let (keyword, targets) = try keywordAndTargets(arguments, usage: "quicklinks add <keyword> <target>...")
+        try ConfigStore.update { $0.links[keyword] = LinkTargets(targets) }
+        print(([keyword] + targets).joined(separator: "\t"))
+    }
+
+    private static func append(_ arguments: [String]) throws {
+        let (keyword, targets) = try keywordAndTargets(arguments, usage: "quicklinks append <keyword> <target>...")
+        var result: [String] = []
+        try ConfigStore.update { config in
+            let existing = config.links[keyword]?.values ?? []
+            result = existing + targets.filter { !existing.contains($0) }
+            config.links[keyword] = LinkTargets(result)
         }
-        let target = try normalizedTarget(arguments[1])
-        try ConfigStore.update { $0.links[keyword] = target }
-        print("\(keyword)\t\(target)")
+        print(([keyword] + result).joined(separator: "\t"))
     }
 
     private static func remove(_ arguments: [String]) throws {
-        guard arguments.count == 1 else { throw CLIError(message: "usage: quicklinks remove <keyword>") }
+        guard let keyword = arguments.first else {
+            throw CLIError(message: "usage: quicklinks remove <keyword> [target...]")
+        }
+        let targets = Array(arguments.dropFirst())
         try ConfigStore.update { config in
-            guard config.links.removeValue(forKey: arguments[0]) != nil else {
-                throw CLIError(message: "no link named \"\(arguments[0])\"")
+            guard let existing = config.links[keyword] else {
+                throw CLIError(message: "no link named \"\(keyword)\"")
             }
+            if targets.isEmpty {
+                config.links.removeValue(forKey: keyword)
+                return
+            }
+            let missing = targets.filter { !existing.values.contains($0) }
+            guard missing.isEmpty else {
+                throw CLIError(message: "\"\(keyword)\" has no target \(missing.joined(separator: ", "))")
+            }
+            let remaining = existing.values.filter { !targets.contains($0) }
+            config.links[keyword] = remaining.isEmpty ? nil : LinkTargets(remaining)
         }
     }
 
@@ -89,11 +110,22 @@ enum CLI {
             throw CLIError(message: "usage: quicklinks open <keyword> [query...]")
         }
         let config = try ConfigStore.load()
-        guard let target = config.links[keyword] else {
+        guard let targets = config.links[keyword] else {
             throw CLIError(message: "no link named \"\(keyword)\"")
         }
         let query = arguments.dropFirst().joined(separator: " ")
-        try Opener.open(Link(keyword: keyword, template: target), query: query, terminalApp: config.terminalApp)
+        let link = Link(keyword: keyword, targets: targets.values.map(Target.init(value:)))
+        try Opener.open(link, query: query, terminalApp: config.terminalApp)
+    }
+
+    private static func keywordAndTargets(_ arguments: [String], usage: String) throws -> (String, [String]) {
+        guard arguments.count >= 2 else { throw CLIError(message: "usage: \(usage)") }
+        let keyword = arguments[0]
+        guard !keyword.contains(where: \.isWhitespace) else {
+            throw CLIError(message: "keyword must not contain whitespace")
+        }
+        let targets = try arguments.dropFirst().map(normalizedTarget)
+        return (keyword, targets)
     }
 
     private static func set(_ arguments: [String]) throws {

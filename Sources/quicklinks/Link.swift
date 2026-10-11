@@ -1,23 +1,35 @@
 import Foundation
 
-struct Link: Identifiable, Equatable {
+struct Target: Equatable {
     static let queryPlaceholder = "{query}"
     private static let queryValueAllowed = CharacterSet.urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&=+#?/"))
 
-    let keyword: String
-    let template: String
+    let value: String
 
-    var id: String { keyword }
-
-    var isFolder: Bool { template.hasPrefix("/") || template.hasPrefix("~") }
+    var isFolder: Bool { value.hasPrefix("/") || value.hasPrefix("~") }
 
     var folderURL: URL {
-        URL(fileURLWithPath: (template as NSString).expandingTildeInPath)
+        URL(fileURLWithPath: (value as NSString).expandingTildeInPath)
     }
 
     func resolvedURL(query: String) -> URL? {
-        let encoded = query.addingPercentEncoding(withAllowedCharacters: Link.queryValueAllowed) ?? query
-        return URL(string: template.replacingOccurrences(of: Link.queryPlaceholder, with: encoded))
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: Target.queryValueAllowed) ?? query
+        return URL(string: value.replacingOccurrences(of: Target.queryPlaceholder, with: encoded))
+    }
+}
+
+struct Link: Identifiable, Equatable {
+    let keyword: String
+    let targets: [Target]
+
+    var id: String { keyword }
+
+    var isGroup: Bool { targets.count > 1 }
+
+    var summary: String { targets.map(\.value).joined(separator: ", ") }
+
+    func matches(_ needle: String) -> Bool {
+        targets.contains { $0.value.lowercased().contains(needle) }
     }
 }
 
@@ -68,7 +80,7 @@ enum Search {
     private static func rankedLinks(_ links: [Link], needle: String) -> [Ranked] {
         links.compactMap { link in
             let rank = rank(link.keyword, needle: needle)
-                ?? (link.template.lowercased().contains(needle) ? 3 : nil)
+                ?? (link.matches(needle) ? 3 : nil)
             return rank.map { Ranked(entry: .link(link), rank: $0, kind: 0, title: link.keyword.lowercased()) }
         }
     }

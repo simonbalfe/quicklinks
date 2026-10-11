@@ -6,10 +6,16 @@ struct OpenError: LocalizedError {
 
 enum Opener {
     static func open(_ link: Link, query: String, terminalApp: String) throws {
-        if link.isFolder {
-            try openFolder(link.folderURL, in: terminalApp)
-        } else {
-            try openURL(link, query: query)
+        var failures: [String] = []
+        for target in link.targets {
+            do {
+                try open(target, keyword: link.keyword, query: query, terminalApp: terminalApp)
+            } catch {
+                failures.append(error.localizedDescription)
+            }
+        }
+        if !failures.isEmpty {
+            throw OpenError(errorDescription: failures.joined(separator: "; "))
         }
     }
 
@@ -17,9 +23,17 @@ enum Opener {
         NSWorkspace.shared.open(app.url)
     }
 
-    private static func openURL(_ link: Link, query: String) throws {
-        guard let url = link.resolvedURL(query: query) else {
-            throw OpenError(errorDescription: "Invalid URL for \"\(link.keyword)\": \(link.template)")
+    private static func open(_ target: Target, keyword: String, query: String, terminalApp: String) throws {
+        if target.isFolder {
+            try openFolder(target.folderURL, in: terminalApp)
+        } else {
+            try openURL(target, keyword: keyword, query: query)
+        }
+    }
+
+    private static func openURL(_ target: Target, keyword: String, query: String) throws {
+        guard let url = target.resolvedURL(query: query) else {
+            throw OpenError(errorDescription: "Invalid URL for \"\(keyword)\": \(target.value)")
         }
         NSWorkspace.shared.open(url)
     }

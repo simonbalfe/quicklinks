@@ -20,6 +20,7 @@ No account, no cloud, no settings screen. One small native app and one JSON file
 - **Links**: give any website a short keyword.
 - **Search links**: put `{query}` in a URL and whatever you type after the keyword is filled in.
 - **Folders**: a keyword can point at a folder; it opens in your terminal app.
+- **Groups**: one keyword can open several links at once.
 - **Apps**: it also finds and launches the apps you have installed.
 - **Fast and light**: runs in the background with no Dock icon.
 - **Plain config**: edit one JSON file, or use the command line. Changes apply the next time the panel opens.
@@ -67,12 +68,25 @@ A link target is either:
 
 Keywords cannot contain spaces. Adding a keyword that already exists replaces it.
 
+## Groups
+
+Give a keyword more than one target and they all open together.
+
+```sh
+quicklinks add morning https://mail.google.com https://calendar.google.com ~/Documents/notes
+quicklinks append morning https://news.ycombinator.com
+quicklinks remove morning https://news.ycombinator.com
+```
+
+Type `morning`, press Enter, and every target opens. A `{query}` target in a group is filled with the text you type after the keyword. If one target fails to open, the others still open and the error is shown.
+
 ## All commands
 
 ```sh
 quicklinks list                      # show all links
-quicklinks add <keyword> <target>    # add or replace a link
-quicklinks remove <keyword>          # delete a link
+quicklinks add <keyword> <target>... # add or replace a link; several targets make a group
+quicklinks append <keyword> <target>...  # add targets to a link (creates it if missing)
+quicklinks remove <keyword> [target...]  # delete a link, or only the given targets
 quicklinks open <keyword> [text]     # open a link from the terminal
 quicklinks apps [query]              # list indexed apps
 quicklinks set terminal Ghostty      # app used to open folders (default: iTerm)
@@ -95,7 +109,8 @@ Located at `~/.config/quicklinks/config.json`. It is created on first run.
   "links": {
     "gh": "https://github.com",
     "g": "https://www.google.com/search?q={query}",
-    "ws": "~/workspace"
+    "ws": "~/workspace",
+    "morning": ["https://mail.google.com", "https://calendar.google.com"]
   }
 }
 ```

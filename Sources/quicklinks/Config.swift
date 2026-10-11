@@ -1,12 +1,45 @@
 import Foundation
 
+struct LinkTargets: Codable, Equatable, ExpressibleByStringLiteral {
+    var values: [String]
+
+    init(_ values: [String]) {
+        self.values = values
+    }
+
+    init(stringLiteral value: String) {
+        values = [value]
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let single = try? container.decode(String.self) {
+            values = [single]
+            return
+        }
+        values = try container.decode([String].self)
+        guard !values.isEmpty else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "a link needs at least one target")
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        if values.count == 1 {
+            try container.encode(values[0])
+        } else {
+            try container.encode(values)
+        }
+    }
+}
+
 struct Config: Codable {
     static let defaultHotkey = "option+space"
     static let defaultTerminal = "iTerm"
 
     var hotkey: String
     var terminal: String?
-    var links: [String: String]
+    var links: [String: LinkTargets]
 
     var terminalApp: String { terminal ?? Config.defaultTerminal }
 }

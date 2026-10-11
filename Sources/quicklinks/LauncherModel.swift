@@ -64,7 +64,7 @@ final class LauncherModel {
             let config = try ConfigStore.load()
             terminalApp = config.terminalApp
             links = config.links
-                .map { Link(keyword: $0.key, template: $0.value) }
+                .map { Link(keyword: $0.key, targets: $0.value.values.map(Target.init(value:))) }
                 .sorted { $0.keyword < $1.keyword }
             errorMessage = nil
         } catch {
