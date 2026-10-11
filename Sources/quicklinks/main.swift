@@ -23,7 +23,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 
-if arguments.isEmpty || arguments == ["--show"] {
+let startsApp: Bool = {
+    switch arguments {
+    case []: return isatty(STDOUT_FILENO) == 0
+    case ["--show"], ["start"], ["start", "--show"]: return true
+    default: return false
+    }
+}()
+
+if startsApp {
     MainActor.assumeIsolated {
         let app = NSApplication.shared
         let delegate = AppDelegate()

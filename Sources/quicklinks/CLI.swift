@@ -5,21 +5,7 @@ struct CLIError: Error {
 }
 
 enum CLI {
-    static let usage = """
-        usage: quicklinks [command]
-
-          (no command)                 run the launcher app (--show opens the panel at launch)
-          list                         print every keyword and its targets (tab separated)
-          add <keyword> <target>...    add or replace a link; several targets make a group that opens together
-          append <keyword> <target>... add targets to a link, creating it if missing
-          remove <keyword> [target...] delete a link, or only the given targets from it
-          open <keyword> [query...]    open a link now (folders open in the terminal app)
-          apps [query]                 list the applications the launcher indexes
-          set hotkey <spec>            e.g. option+space, cmd+shift+k (restart the app to apply)
-          set terminal <app>           e.g. iTerm, Terminal, Ghostty
-          path                         print the config file path
-          edit                         open the config file in the default editor
-        """
+    static let helpFlags: Set<String> = ["-h", "--help"]
 
     static func run(_ arguments: [String]) -> Int32 {
         do {
@@ -35,8 +21,23 @@ enum CLI {
     }
 
     private static func dispatch(_ arguments: [String]) throws {
-        guard let command = arguments.first else { throw CLIError(message: usage) }
+        guard let command = arguments.first else {
+            print(Help.overview)
+            return
+        }
         let rest = Array(arguments.dropFirst())
+        if helpFlags.contains(command) {
+            print(Help.overview)
+            return
+        }
+        if command == "help" {
+            try help(rest)
+            return
+        }
+        if let text = Help.text(for: command), rest.contains(where: helpFlags.contains) {
+            print(text)
+            return
+        }
         switch command {
         case "list", "ls": try list()
         case "add": try add(rest)
@@ -47,9 +48,20 @@ enum CLI {
         case "set": try set(rest)
         case "path": print(ConfigStore.url.path)
         case "edit": try edit()
-        case "help", "-h", "--help": print(usage)
-        default: throw CLIError(message: "unknown command \"\(command)\"\n\n\(usage)")
+        case "start": throw CLIError(message: "usage: quicklinks start [--show]")
+        default: throw CLIError(message: "unknown command \"\(command)\"\nRun `quicklinks --help` for the list of commands.")
         }
+    }
+
+    private static func help(_ arguments: [String]) throws {
+        guard let command = arguments.first else {
+            print(Help.overview)
+            return
+        }
+        guard let text = Help.text(for: command) else {
+            throw CLIError(message: "no help for \"\(command)\"\nRun `quicklinks --help` for the list of commands.")
+        }
+        print(text)
     }
 
     private static func list() throws {

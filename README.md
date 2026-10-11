@@ -43,7 +43,7 @@ cd quicklinks
 This builds the app and copies it to `~/.local/bin/quicklinks`. Make sure that folder is on your `PATH`, then start it:
 
 ```sh
-quicklinks
+quicklinks start
 ```
 
 To start it automatically, add `~/.local/bin/quicklinks` under System Settings → General → Login Items.
@@ -98,10 +98,12 @@ quicklinks set terminal Ghostty      # app used to open folders (default: iTerm)
 quicklinks set hotkey cmd+shift+k    # change the hotkey (restart the app after)
 quicklinks path                      # print the config file location
 quicklinks edit                      # open the config file
-quicklinks --show                    # start the app and show the panel
+quicklinks start                    # run the app in the background
+quicklinks start --show             # run the app and show the panel
+quicklinks --help                   # show help (also: quicklinks <command> --help)
 ```
 
-Running `quicklinks` with no arguments starts the app.
+Running `quicklinks` with no arguments in a terminal shows the help. Without a terminal, for example from Login Items, it starts the app.
 
 ## Config file
 
