@@ -8,22 +8,27 @@ A tiny macOS launcher. Press a hotkey, type a short keyword, press Enter. Your w
 
 No account, no cloud, no settings screen. One small native app and one JSON file.
 
+## Key features
+
+- **Global hotkey**: `⌥Space` opens the panel from anywhere. Type, press Enter, done.
+- **Keyword links**: give any website a short keyword.
+- **Search links**: put `{query}` in a URL and the text you type after the keyword is filled in (`g best pizza`).
+- **Groups**: one keyword opens several links at once (`morning` opens mail, calendar and notes).
+- **Folders**: a keyword can point at a folder; it opens in your terminal app.
+- **App launcher**: installed apps show up as you type. Your links rank above apps.
+- **Full command line**: everything the app can do is also available from `quicklinks` (add, append, remove, list, open, set hotkey and terminal), so it is easy to script.
+- **Plain config**: one JSON file you can hand-edit. Link changes apply the next time the panel opens.
+- **Fast and light**: native Swift, runs in the background with no Dock icon.
+
 ## What it does
 
 | You type | What happens |
 |---|---|
 | `gh` | Opens https://github.com |
 | `g best pizza` | Searches Google for "best pizza" |
+| `morning` | Opens every link in the `morning` group |
 | `ws` | Opens your workspace folder in the terminal |
 | `safari` | Launches Safari (any installed app works) |
-
-- **Links**: give any website a short keyword.
-- **Search links**: put `{query}` in a URL and whatever you type after the keyword is filled in.
-- **Folders**: a keyword can point at a folder; it opens in your terminal app.
-- **Groups**: one keyword can open several links at once.
-- **Apps**: it also finds and launches the apps you have installed.
-- **Fast and light**: runs in the background with no Dock icon.
-- **Plain config**: edit one JSON file, or use the command line. Changes apply the next time the panel opens.
 
 ## Install
 
