@@ -128,7 +128,7 @@ enum CLI {
         }
         let query = arguments.dropFirst().joined(separator: " ")
         let link = Link(keyword: keyword, targets: targets.targets)
-        try Opener.open(link, query: query, terminalApp: config.terminalApp)
+        try Opener.open(link, query: query)
     }
 
     private static func keywordAndTargets(_ arguments: [String], usage: String) throws -> (String, [Target]) {
@@ -162,19 +162,11 @@ enum CLI {
     }
 
     private static func set(_ arguments: [String]) throws {
-        guard arguments.count == 2 else {
-            throw CLIError(message: "usage: quicklinks set hotkey|terminal <value>")
+        guard arguments.count == 2, arguments[0] == "hotkey" else {
+            throw CLIError(message: "usage: quicklinks set hotkey <value>")
         }
-        let value = arguments[1]
-        switch arguments[0] {
-        case "hotkey":
-            _ = try HotKey.parse(value)
-            try ConfigStore.update { $0.hotkey = value }
-        case "terminal":
-            try ConfigStore.update { $0.terminal = value }
-        default:
-            throw CLIError(message: "unknown setting \"\(arguments[0])\"")
-        }
+        _ = try HotKey.parse(arguments[1])
+        try ConfigStore.update { $0.hotkey = arguments[1] }
     }
 
     private static func edit() throws {

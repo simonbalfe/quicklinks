@@ -42,7 +42,7 @@ struct LinkTargetsTests {
 
     @Test func configWithMixedLinksRoundTripsUnchanged() throws {
         let json = """
-            {"hotkey":"cmd+space","links":{"gh":"https://github.com","morning":["https://mail.google.com","~/notes"],"ws":{"target":"~/workspace","with":"Cursor"}},"terminal":"iTerm"}
+            {"hotkey":"cmd+space","links":{"gh":"https://github.com","morning":["https://mail.google.com","~/notes"],"ws":{"target":"~/workspace","with":"Cursor"}}}
             """
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
         let encoder = JSONEncoder()
@@ -51,9 +51,14 @@ struct LinkTargetsTests {
         #expect(encoded == json)
     }
 
-    @Test func terminalFallsBackToDefault() throws {
-        let config = try JSONDecoder().decode(Config.self, from: Data("{\"hotkey\":\"cmd+space\",\"links\":{}}".utf8))
-        #expect(config.terminalApp == Config.defaultTerminal)
+    @Test func oldConfigWithATerminalSettingStillLoadsAndDropsIt() throws {
+        let json = "{\"hotkey\":\"cmd+space\",\"links\":{\"ws\":\"~/workspace\"},\"terminal\":\"iTerm\"}"
+        let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        let encoded = String(decoding: try encoder.encode(config), as: UTF8.self)
+        #expect(config.links["ws"]?.targets == [Target(value: "~/workspace")])
+        #expect(encoded == "{\"hotkey\":\"cmd+space\",\"links\":{\"ws\":\"~/workspace\"}}")
     }
 }
 

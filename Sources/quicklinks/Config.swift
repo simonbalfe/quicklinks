@@ -35,13 +35,9 @@ struct LinkTargets: Codable, Equatable, ExpressibleByStringLiteral {
 
 struct Config: Codable {
     static let defaultHotkey = "option+space"
-    static let defaultTerminal = "iTerm"
 
     var hotkey: String
-    var terminal: String?
     var links: [String: LinkTargets]
-
-    var terminalApp: String { terminal ?? Config.defaultTerminal }
 }
 
 enum ConfigStore {
@@ -50,7 +46,6 @@ enum ConfigStore {
 
     static let starter = Config(
         hotkey: Config.defaultHotkey,
-        terminal: Config.defaultTerminal,
         links: [
             "gh": "https://github.com",
             "mail": "https://mail.google.com",

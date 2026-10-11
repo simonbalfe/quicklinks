@@ -11,7 +11,6 @@ final class LauncherModel {
     private(set) var errorMessage: String?
 
     @ObservationIgnored var onDismiss: () -> Void = {}
-    @ObservationIgnored private var terminalApp = Config.defaultTerminal
 
     var visibleEntries: [Entry] {
         Search.results(for: text, links: links, apps: apps)
@@ -40,7 +39,7 @@ final class LauncherModel {
         do {
             switch entry {
             case .link(let link):
-                try Opener.open(link, query: Search.query(for: text, link: link), terminalApp: terminalApp)
+                try Opener.open(link, query: Search.query(for: text, link: link))
             case .app(let app):
                 Opener.open(app)
             }
@@ -62,7 +61,6 @@ final class LauncherModel {
     private func reload() {
         do {
             let config = try ConfigStore.load()
-            terminalApp = config.terminalApp
             links = config.links
                 .map { Link(keyword: $0.key, targets: $0.value.targets) }
                 .sorted { $0.keyword < $1.keyword }

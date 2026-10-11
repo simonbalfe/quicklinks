@@ -45,8 +45,7 @@ quicklinks add g "https://www.google.com/search?q={query}"
 
 - A link opens a **URL** (like `https://...` or `vscode://...`), a **URI** (like `spotify:playlist:<id>`) or a **folder**.
 - URLs and URIs open in the app macOS picks for them (your default browser, Spotify, and so on).
-- Folders open in your terminal app by default (iTerm; change it with `quicklinks set terminal Terminal`).
-- Any single target can use a different app with `--with` (see below), which overrides those defaults.
+- Folders open in Finder by default. To open one in a terminal or an editor instead, add `--with` (see below).
 - `{query}` is replaced by what you type after the keyword. `g best pizza` searches Google for "best pizza".
 - Adding a keyword that already exists replaces it.
 
@@ -61,14 +60,17 @@ quicklinks append morning https://news.ycombinator.com
 
 ## Open with a specific app
 
-Add `--with <app>` to send a link or folder to an app instead of the default. This applies to that link only and overrides the browser, the app macOS picks, or the terminal.
+Add `--with <app>` to send a link or folder to an app instead of the default. This applies to that link only. By default URLs open in your browser, URIs in the app that owns them, and folders in Finder.
 
 ```sh
 quicklinks add ws ~/workspace --with Cursor
+quicklinks add proj ~/projects/app --with Terminal
 quicklinks add work https://github.com --with "Google Chrome"
 ```
 
-`quicklinks apps` lists the app names you can use.
+`quicklinks apps` lists the app names you can use. A terminal is just another app: `--with Terminal`, `--with iTerm` or `--with Ghostty`.
+
+`--with` applies to every target in that command, so for a group that mixes kinds, add the first targets, then `append` the rest with their own `--with`.
 
 ## Let an agent add your links
 
@@ -82,15 +84,16 @@ The agent runs:
 
 ```sh
 quicklinks add db https://abcdefghijklmnopqrst.supabase.co
-quicklinks add slop ~/dev/slop
+quicklinks add slop ~/dev/slop --with Terminal
 quicklinks add tunes spotify:playlist:123
-quicklinks add all https://abcdefghijklmnopqrst.supabase.co ~/dev/slop spotify:playlist:123
+quicklinks add all https://abcdefghijklmnopqrst.supabase.co spotify:playlist:123
+quicklinks append all ~/dev/slop --with Terminal
 ```
 
 Now `⌥Space`, then:
 
 - `db` opens the dashboard in your browser
-- `slop` opens the folder in your terminal
+- `slop` opens the folder in Terminal
 - `tunes` opens the playlist in Spotify
 - `all` opens all three at once
 
@@ -100,12 +103,11 @@ Changes apply the next time the panel opens. There is nothing to restart.
 
 ```sh
 quicklinks list                           # show all links
-quicklinks add <keyword> <target>...      # add or replace a link (add --with <app> to pick an app)
-quicklinks append <keyword> <target>...   # add targets to a link
+quicklinks add <keyword> <target>...      # add or replace a link; add --with <app> to open it in that app
+quicklinks append <keyword> <target>...   # add targets to a link (also takes --with <app>)
 quicklinks remove <keyword> [target...]   # delete a link, or only some targets
 quicklinks open <keyword> [text]          # open a link from the terminal
 quicklinks apps [query]                   # list apps
-quicklinks set terminal Ghostty           # default app for folders (a link's --with overrides it)
 quicklinks set hotkey cmd+shift+k         # change the hotkey, then restart the app
 quicklinks edit                           # open the config file
 quicklinks start                          # run the app in the background
@@ -119,17 +121,18 @@ Everything is stored in `~/.config/quicklinks/config.json`. You can edit it by h
 ```json
 {
   "hotkey": "option+space",
-  "terminal": "iTerm",
   "links": {
     "gh": "https://github.com",
     "g": "https://www.google.com/search?q={query}",
+    "notes": "~/Documents/notes",
     "ws": {"target": "~/workspace", "with": "Cursor"},
+    "proj": {"target": "~/projects/app", "with": "Terminal"},
     "morning": ["https://mail.google.com", "https://calendar.google.com"]
   }
 }
 ```
 
-A target is either a string or `{"target": "...", "with": "App"}`. `with` is the app that opens that one target. `terminal` is only the default app for folders that have no `with`.
+A target is either a string or `{"target": "...", "with": "App"}`. `with` is the app that opens that one target. Without it, URLs open in your browser, URIs in the app that owns them, and folders in Finder.
 
 Links are re-read every time the panel opens. The hotkey is only read when the app starts.
 

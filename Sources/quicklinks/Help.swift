@@ -21,7 +21,6 @@ enum Help {
 
         SETTINGS
           set hotkey <spec>                change the global hotkey (restart the app to apply)
-          set terminal <app>               change the app that opens folders
           apps [query]                     list the applications the launcher indexes
 
         CONFIG FILE
@@ -37,6 +36,7 @@ enum Help {
           quicklinks add g "https://www.google.com/search?q={query}"
           quicklinks add morning https://mail.google.com https://calendar.google.com
           quicklinks add ws ~/workspace --with Cursor
+          quicklinks add proj ~/projects/app --with Terminal
           quicklinks open g best pizza
           quicklinks set hotkey cmd+shift+k
 
@@ -70,15 +70,16 @@ enum Help {
             Several targets make a group that opens together. Use {query} in a URL to insert
             text typed after the keyword.
 
-            --with <app> opens the targets in that app instead of the default: URLs open in
-            the app rather than the default browser, and folders open in the app rather than
-            the terminal. Run `quicklinks apps` to see app names.
+            --with <app> opens the targets in that app instead of the default. By default URLs
+            open in the app macOS picks (your browser, Spotify, ...) and folders open in
+            Finder. Run `quicklinks apps` to see app names.
 
             examples:
               quicklinks add gh https://github.com
               quicklinks add notes ~/Documents/notes
               quicklinks add morning https://mail.google.com https://calendar.google.com
               quicklinks add ws ~/workspace --with Cursor
+              quicklinks add proj ~/projects/app --with Terminal
               quicklinks add work https://github.com --with "Google Chrome"
             """,
         "append": """
@@ -96,8 +97,8 @@ enum Help {
         "open": """
             usage: quicklinks open <keyword> [query...]
 
-            Open a link from the terminal. Folders open in the terminal app unless the target
-            has an app set with --with. The query text replaces {query} in the link's URLs.
+            Open a link from the terminal. Folders open in Finder unless the target has an app
+            set with --with. The query text replaces {query} in the link's URLs.
 
             example:
               quicklinks open g best pizza
@@ -110,12 +111,9 @@ enum Help {
             """,
         "set": """
             usage: quicklinks set hotkey <spec>
-                   quicklinks set terminal <app>
 
             hotkey    modifiers cmd, option, control, shift plus a key a-z, 0-9 or space,
                       for example option+space or cmd+shift+k. Restart the app to apply.
-            terminal  the app that opens folder links, for example iTerm, Terminal or
-                      Ghostty. Applies the next time the panel opens.
             """,
         "path": """
             usage: quicklinks path

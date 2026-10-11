@@ -5,11 +5,11 @@ struct OpenError: LocalizedError {
 }
 
 enum Opener {
-    static func open(_ link: Link, query: String, terminalApp: String) throws {
+    static func open(_ link: Link, query: String) throws {
         var failures: [String] = []
         for target in link.targets {
             do {
-                try open(target, keyword: link.keyword, query: query, terminalApp: terminalApp)
+                try open(target, keyword: link.keyword, query: query)
             } catch {
                 failures.append(error.localizedDescription)
             }
@@ -23,9 +23,9 @@ enum Opener {
         NSWorkspace.shared.open(app.url)
     }
 
-    private static func open(_ target: Target, keyword: String, query: String, terminalApp: String) throws {
+    private static func open(_ target: Target, keyword: String, query: String) throws {
         if target.isFolder {
-            try openFolder(target, in: terminalApp)
+            try openFolder(target)
         } else {
             try openURL(target, keyword: keyword, query: query)
         }
@@ -42,17 +42,17 @@ enum Opener {
         try run(app: app, opening: url.absoluteString, failure: "Cannot open \"\(app)\" (check the app name with `quicklinks apps`)")
     }
 
-    private static func openFolder(_ target: Target, in terminalApp: String) throws {
+    private static func openFolder(_ target: Target) throws {
         let folder = target.folderURL
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory), isDirectory.boolValue else {
             throw OpenError(errorDescription: "Not a folder: \(folder.path)")
         }
-        if let app = target.app {
-            try run(app: app, opening: folder.path, failure: "Cannot open \"\(app)\" (check the app name with `quicklinks apps`)")
-        } else {
-            try run(app: terminalApp, opening: folder.path, failure: "Cannot open \"\(terminalApp)\" (set \"terminal\" in the config)")
+        guard let app = target.app else {
+            NSWorkspace.shared.open(folder)
+            return
         }
+        try run(app: app, opening: folder.path, failure: "Cannot open \"\(app)\" (check the app name with `quicklinks apps`)")
     }
 
     private static func run(app: String, opening path: String, failure: String) throws {
