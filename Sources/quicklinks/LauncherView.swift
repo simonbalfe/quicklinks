@@ -98,7 +98,7 @@ private struct LinkContent: View {
         Text(link.keyword)
             .font(.system(.body, design: .monospaced).bold())
             .frame(width: 120, alignment: .leading)
-        Image(systemName: link.isGroup ? "square.stack" : (link.targets[0].isFolder ? "terminal" : "arrow.right"))
+        Image(systemName: link.isGroup ? "square.stack" : (link.targets[0].isFolder && link.targets[0].app == nil ? "terminal" : "arrow.right"))
             .foregroundStyle(.secondary)
         Text(link.summary)
             .foregroundStyle(.secondary)

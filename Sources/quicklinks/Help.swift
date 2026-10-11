@@ -11,8 +11,11 @@ enum Help {
 
         LINKS
           list                             print every keyword and its targets
-          add <keyword> <target>...        add or replace a link; several targets make a group
-          append <keyword> <target>...     add targets to a link, creating it if missing
+          add <keyword> <target>... [--with <app>]
+                                           add or replace a link; several targets make a group;
+                                           --with opens the targets in that app
+          append <keyword> <target>... [--with <app>]
+                                           add targets to a link, creating it if missing
           remove <keyword> [target...]     delete a link, or only the given targets
           open <keyword> [query...]        open a link now
 
@@ -33,6 +36,7 @@ enum Help {
           quicklinks add gh https://github.com
           quicklinks add g "https://www.google.com/search?q={query}"
           quicklinks add morning https://mail.google.com https://calendar.google.com
+          quicklinks add ws ~/workspace --with Cursor
           quicklinks open g best pizza
           quicklinks set hotkey cmd+shift+k
 
@@ -55,25 +59,32 @@ enum Help {
             usage: quicklinks list
 
             Print every link, one per line, sorted by keyword. Columns are tab separated:
-            the keyword followed by each of its targets.
+            the keyword followed by each of its targets. A target opened with a specific app
+            is shown as "target (App)".
             """,
         "add": """
-            usage: quicklinks add <keyword> <target>...
+            usage: quicklinks add <keyword> <target>... [--with <app>]
 
             Add a link, or replace the link that already uses the keyword. A target is a URL
             with a scheme (https://...) or a folder path. Several targets make a group that
             opens together. Use {query} in a URL to insert text typed after the keyword.
 
+            --with <app> opens the targets in that app instead of the default: URLs open in
+            the app rather than the default browser, and folders open in the app rather than
+            the terminal. Run `quicklinks apps` to see app names.
+
             examples:
               quicklinks add gh https://github.com
               quicklinks add notes ~/Documents/notes
               quicklinks add morning https://mail.google.com https://calendar.google.com
+              quicklinks add ws ~/workspace --with Cursor
+              quicklinks add work https://github.com --with "Google Chrome"
             """,
         "append": """
-            usage: quicklinks append <keyword> <target>...
+            usage: quicklinks append <keyword> <target>... [--with <app>]
 
             Add targets to an existing link, skipping ones it already has. Creates the link
-            if the keyword is new.
+            if the keyword is new. --with opens the added targets in that app.
             """,
         "remove": """
             usage: quicklinks remove <keyword> [target...]
@@ -84,8 +95,8 @@ enum Help {
         "open": """
             usage: quicklinks open <keyword> [query...]
 
-            Open a link from the terminal. Folders open in the terminal app. The query text
-            replaces {query} in the link's URLs.
+            Open a link from the terminal. Folders open in the terminal app unless the target
+            has an app set with --with. The query text replaces {query} in the link's URLs.
 
             example:
               quicklinks open g best pizza

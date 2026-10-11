@@ -67,25 +67,26 @@ enum CLI {
     private static func list() throws {
         let config = try ConfigStore.load()
         for (keyword, targets) in config.links.sorted(by: { $0.key < $1.key }) {
-            print(([keyword] + targets.values).joined(separator: "\t"))
+            print(([keyword] + targets.targets.map(\.summary)).joined(separator: "\t"))
         }
     }
 
     private static func add(_ arguments: [String]) throws {
-        let (keyword, targets) = try keywordAndTargets(arguments, usage: "quicklinks add <keyword> <target>...")
+        let (keyword, targets) = try keywordAndTargets(arguments, usage: "quicklinks add <keyword> <target>... [--with <app>]")
         try ConfigStore.update { $0.links[keyword] = LinkTargets(targets) }
-        print(([keyword] + targets).joined(separator: "\t"))
+        print(([keyword] + targets.map(\.summary)).joined(separator: "\t"))
     }
 
     private static func append(_ arguments: [String]) throws {
-        let (keyword, targets) = try keywordAndTargets(arguments, usage: "quicklinks append <keyword> <target>...")
-        var result: [String] = []
+        let (keyword, targets) = try keywordAndTargets(arguments, usage: "quicklinks append <keyword> <target>... [--with <app>]")
+        var result: [Target] = []
         try ConfigStore.update { config in
-            let existing = config.links[keyword]?.values ?? []
-            result = existing + targets.filter { !existing.contains($0) }
+            let existing = config.links[keyword]?.targets ?? []
+            let known = Set(existing.map(\.value))
+            result = existing + targets.filter { !known.contains($0.value) }
             config.links[keyword] = LinkTargets(result)
         }
-        print(([keyword] + result).joined(separator: "\t"))
+        print(([keyword] + result.map(\.summary)).joined(separator: "\t"))
     }
 
     private static func remove(_ arguments: [String]) throws {
@@ -101,11 +102,11 @@ enum CLI {
                 config.links.removeValue(forKey: keyword)
                 return
             }
-            let missing = targets.filter { !existing.values.contains($0) }
+            let missing = targets.filter { target in !existing.targets.contains { $0.value == target } }
             guard missing.isEmpty else {
                 throw CLIError(message: "\"\(keyword)\" has no target \(missing.joined(separator: ", "))")
             }
-            let remaining = existing.values.filter { !targets.contains($0) }
+            let remaining = existing.targets.filter { !targets.contains($0.value) }
             config.links[keyword] = remaining.isEmpty ? nil : LinkTargets(remaining)
         }
     }
@@ -126,18 +127,38 @@ enum CLI {
             throw CLIError(message: "no link named \"\(keyword)\"")
         }
         let query = arguments.dropFirst().joined(separator: " ")
-        let link = Link(keyword: keyword, targets: targets.values.map(Target.init(value:)))
+        let link = Link(keyword: keyword, targets: targets.targets)
         try Opener.open(link, query: query, terminalApp: config.terminalApp)
     }
 
-    private static func keywordAndTargets(_ arguments: [String], usage: String) throws -> (String, [String]) {
-        guard arguments.count >= 2 else { throw CLIError(message: "usage: \(usage)") }
-        let keyword = arguments[0]
+    private static func keywordAndTargets(_ arguments: [String], usage: String) throws -> (String, [Target]) {
+        let (positional, app) = try withApp(arguments)
+        guard positional.count >= 2 else { throw CLIError(message: "usage: \(usage)") }
+        let keyword = positional[0]
         guard !keyword.contains(where: \.isWhitespace) else {
             throw CLIError(message: "keyword must not contain whitespace")
         }
-        let targets = try arguments.dropFirst().map(normalizedTarget)
+        let targets = try positional.dropFirst().map { Target(value: try normalizedTarget($0), app: app) }
         return (keyword, targets)
+    }
+
+    private static func withApp(_ arguments: [String]) throws -> (positional: [String], app: String?) {
+        var positional: [String] = []
+        var app: String?
+        var remaining = arguments[...]
+        while let argument = remaining.popFirst() {
+            if argument == "--with" {
+                guard let name = remaining.popFirst(), !name.isEmpty else {
+                    throw CLIError(message: "--with needs an app name")
+                }
+                app = name
+            } else if argument.hasPrefix("--with=") {
+                app = String(argument.dropFirst("--with=".count))
+            } else {
+                positional.append(argument)
+            }
+        }
+        return (positional, app)
     }
 
     private static func set(_ arguments: [String]) throws {

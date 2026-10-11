@@ -15,6 +15,7 @@ No account, no cloud, no settings screen. One small native app and one JSON file
 - **Search links**: put `{query}` in a URL and the text you type after the keyword is filled in (`g best pizza`).
 - **Groups**: one keyword opens several links at once (`morning` opens mail, calendar and notes).
 - **Folders**: a keyword can point at a folder; it opens in your terminal app.
+- **Open with**: send any link or folder to a specific app instead of the default (`ws` opens in your editor).
 - **App launcher**: installed apps show up as you type. Your links rank above apps.
 - **Full command line**: everything the app can do is also available from `quicklinks` (add, append, remove, list, open, set hotkey and terminal), so it is easy to script.
 - **Plain config**: one JSON file you can hand-edit. Link changes apply the next time the panel opens.
@@ -85,12 +86,24 @@ quicklinks remove morning https://news.ycombinator.com
 
 Type `morning`, press Enter, and every target opens. A `{query}` target in a group is filled with the text you type after the keyword. If one target fails to open, the others still open and the error is shown.
 
+## Open with a specific app
+
+By default URLs open in your default browser and folders open in your terminal app. Add `--with <app>` to open the targets in another app.
+
+```sh
+quicklinks add ws ~/workspace --with Cursor
+quicklinks add work https://github.com --with "Google Chrome"
+quicklinks append morning ~/Documents/notes --with Obsidian
+```
+
+The app name is the name `quicklinks apps` lists. `--with` applies to the targets named in that command, so one group can send different targets to different apps. `quicklinks list` shows these targets as `target (App)`. If the app cannot be opened, the error names it.
+
 ## All commands
 
 ```sh
 quicklinks list                      # show all links
-quicklinks add <keyword> <target>... # add or replace a link; several targets make a group
-quicklinks append <keyword> <target>...  # add targets to a link (creates it if missing)
+quicklinks add <keyword> <target>... [--with <app>]  # add or replace a link; several targets make a group
+quicklinks append <keyword> <target>... [--with <app>]  # add targets to a link (creates it if missing)
 quicklinks remove <keyword> [target...]  # delete a link, or only the given targets
 quicklinks open <keyword> [text]     # open a link from the terminal
 quicklinks apps [query]              # list indexed apps
@@ -116,11 +129,13 @@ Located at `~/.config/quicklinks/config.json`. It is created on first run.
   "links": {
     "gh": "https://github.com",
     "g": "https://www.google.com/search?q={query}",
-    "ws": "~/workspace",
+    "ws": {"target": "~/workspace", "with": "Cursor"},
     "morning": ["https://mail.google.com", "https://calendar.google.com"]
   }
 }
 ```
+
+A target is either a string or an object with `target` and optional `with` (the app to open it with). Groups can mix both.
 
 Links are re-read every time the panel opens. The hotkey is read only when the app starts.
 

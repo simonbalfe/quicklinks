@@ -1,34 +1,34 @@
 import Foundation
 
 struct LinkTargets: Codable, Equatable, ExpressibleByStringLiteral {
-    var values: [String]
+    var targets: [Target]
 
-    init(_ values: [String]) {
-        self.values = values
+    init(_ targets: [Target]) {
+        self.targets = targets
     }
 
     init(stringLiteral value: String) {
-        values = [value]
+        targets = [Target(value: value)]
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        if let single = try? container.decode(String.self) {
-            values = [single]
+        if let single = try? container.decode(Target.self) {
+            targets = [single]
             return
         }
-        values = try container.decode([String].self)
-        guard !values.isEmpty else {
+        targets = try container.decode([Target].self)
+        guard !targets.isEmpty else {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "a link needs at least one target")
         }
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        if values.count == 1 {
-            try container.encode(values[0])
+        if targets.count == 1 {
+            try container.encode(targets[0])
         } else {
-            try container.encode(values)
+            try container.encode(targets)
         }
     }
 }

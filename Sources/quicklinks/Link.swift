@@ -1,12 +1,47 @@
 import Foundation
 
-struct Target: Equatable {
+struct Target: Equatable, Codable {
     static let queryPlaceholder = "{query}"
     private static let queryValueAllowed = CharacterSet.urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&=+#?/"))
 
+    private enum CodingKeys: String, CodingKey {
+        case target
+        case with
+    }
+
     let value: String
+    let app: String?
+
+    init(value: String, app: String? = nil) {
+        self.value = value
+        self.app = app
+    }
+
+    init(from decoder: Decoder) throws {
+        if let plain = try? decoder.singleValueContainer().decode(String.self) {
+            self.init(value: plain)
+            return
+        }
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            value: try container.decode(String.self, forKey: .target),
+            app: try container.decodeIfPresent(String.self, forKey: .with))
+    }
+
+    func encode(to encoder: Encoder) throws {
+        guard let app else {
+            var single = encoder.singleValueContainer()
+            try single.encode(value)
+            return
+        }
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(value, forKey: .target)
+        try container.encode(app, forKey: .with)
+    }
 
     var isFolder: Bool { value.hasPrefix("/") || value.hasPrefix("~") }
+
+    var summary: String { app.map { "\(value) (\($0))" } ?? value }
 
     var folderURL: URL {
         URL(fileURLWithPath: (value as NSString).expandingTildeInPath)
@@ -26,7 +61,7 @@ struct Link: Identifiable, Equatable {
 
     var isGroup: Bool { targets.count > 1 }
 
-    var summary: String { targets.map(\.value).joined(separator: ", ") }
+    var summary: String { targets.map(\.summary).joined(separator: ", ") }
 
     func matches(_ needle: String) -> Bool {
         targets.contains { $0.value.lowercased().contains(needle) }

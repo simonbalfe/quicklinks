@@ -25,7 +25,7 @@ enum Opener {
 
     private static func open(_ target: Target, keyword: String, query: String, terminalApp: String) throws {
         if target.isFolder {
-            try openFolder(target.folderURL, in: terminalApp)
+            try openFolder(target, in: terminalApp)
         } else {
             try openURL(target, keyword: keyword, query: query)
         }
@@ -35,22 +35,35 @@ enum Opener {
         guard let url = target.resolvedURL(query: query) else {
             throw OpenError(errorDescription: "Invalid URL for \"\(keyword)\": \(target.value)")
         }
-        NSWorkspace.shared.open(url)
+        guard let app = target.app else {
+            NSWorkspace.shared.open(url)
+            return
+        }
+        try run(app: app, opening: url.absoluteString, failure: "Cannot open \"\(app)\" (check the app name with `quicklinks apps`)")
     }
 
-    private static func openFolder(_ folder: URL, in terminalApp: String) throws {
+    private static func openFolder(_ target: Target, in terminalApp: String) throws {
+        let folder = target.folderURL
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory), isDirectory.boolValue else {
             throw OpenError(errorDescription: "Not a folder: \(folder.path)")
         }
+        if let app = target.app {
+            try run(app: app, opening: folder.path, failure: "Cannot open \"\(app)\" (check the app name with `quicklinks apps`)")
+        } else {
+            try run(app: terminalApp, opening: folder.path, failure: "Cannot open \"\(terminalApp)\" (set \"terminal\" in the config)")
+        }
+    }
+
+    private static func run(app: String, opening path: String, failure: String) throws {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = ["-a", terminalApp, folder.path]
+        process.arguments = ["-a", app, path]
         process.standardError = FileHandle.nullDevice
         try process.run()
         process.waitUntilExit()
         guard process.terminationStatus == 0 else {
-            throw OpenError(errorDescription: "Cannot open \"\(terminalApp)\" (set \"terminal\" in the config)")
+            throw OpenError(errorDescription: failure)
         }
     }
 }
