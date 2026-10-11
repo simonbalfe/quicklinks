@@ -53,4 +53,6 @@ quicklinks edit
 }
 ```
 
+A link value is a string: a URL or a folder path.
+
 Hotkey modifiers: `cmd`, `option`, `control`, `shift`. Keys: `a`–`z`, `0`–`9`, `space`. If the hotkey is taken (for example by Raycast), the app exits with an error; change the hotkey and relaunch.
