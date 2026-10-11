@@ -66,8 +66,9 @@ enum Help {
             usage: quicklinks add <keyword> <target>... [--with <app>]
 
             Add a link, or replace the link that already uses the keyword. A target is a URL
-            with a scheme (https://...) or a folder path. Several targets make a group that
-            opens together. Use {query} in a URL to insert text typed after the keyword.
+            with a scheme (https://...), a URI such as spotify:playlist:<id>, or a folder path.
+            Several targets make a group that opens together. Use {query} in a URL to insert
+            text typed after the keyword.
 
             --with <app> opens the targets in that app instead of the default: URLs open in
             the app rather than the default browser, and folders open in the app rather than

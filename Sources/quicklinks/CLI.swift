@@ -186,7 +186,7 @@ enum CLI {
         process.waitUntilExit()
     }
 
-    private static func normalizedTarget(_ target: String) throws -> String {
+    static func normalizedTarget(_ target: String) throws -> String {
         if target.contains("://") || target.hasPrefix("/") || target.hasPrefix("~") { return target }
         let relative = URL(fileURLWithPath: target, relativeTo: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
             .standardizedFileURL
@@ -194,6 +194,9 @@ enum CLI {
         if FileManager.default.fileExists(atPath: relative.path, isDirectory: &isDirectory), isDirectory.boolValue {
             return relative.path
         }
-        throw CLIError(message: "target must be a URL with a scheme (https://...) or an existing folder path")
+        if target.range(of: "^[A-Za-z][A-Za-z0-9+.-]*:.+", options: .regularExpression) != nil {
+            return target
+        }
+        throw CLIError(message: "target must be a URL with a scheme (https://..., spotify:...) or an existing folder path")
     }
 }

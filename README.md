@@ -43,8 +43,10 @@ quicklinks add notes ~/Documents/notes
 quicklinks add g "https://www.google.com/search?q={query}"
 ```
 
-- A link opens a **URL** (anything with a scheme, like `https://` or `vscode://`) or a **folder**.
-- A folder opens in your terminal app (iTerm by default; change it with `quicklinks set terminal Terminal`).
+- A link opens a **URL** (like `https://...` or `vscode://...`), a **URI** (like `spotify:playlist:<id>`) or a **folder**.
+- URLs and URIs open in the app macOS picks for them (your default browser, Spotify, and so on).
+- Folders open in your terminal app by default (iTerm; change it with `quicklinks set terminal Terminal`).
+- Any single target can use a different app with `--with` (see below), which overrides those defaults.
 - `{query}` is replaced by what you type after the keyword. `g best pizza` searches Google for "best pizza".
 - Adding a keyword that already exists replaces it.
 
@@ -59,7 +61,7 @@ quicklinks append morning https://news.ycombinator.com
 
 ## Open with a specific app
 
-Add `--with <app>` to send a link or folder to an app instead of the default.
+Add `--with <app>` to send a link or folder to an app instead of the default. This applies to that link only and overrides the browser, the app macOS picks, or the terminal.
 
 ```sh
 quicklinks add ws ~/workspace --with Cursor
@@ -81,15 +83,15 @@ The agent runs:
 ```sh
 quicklinks add db https://abcdefghijklmnopqrst.supabase.co
 quicklinks add slop ~/dev/slop
-quicklinks add tunes https://open.spotify.com/playlist/123
-quicklinks add all https://abcdefghijklmnopqrst.supabase.co ~/dev/slop https://open.spotify.com/playlist/123
+quicklinks add tunes spotify:playlist:123
+quicklinks add all https://abcdefghijklmnopqrst.supabase.co ~/dev/slop spotify:playlist:123
 ```
 
 Now `⌥Space`, then:
 
 - `db` opens the dashboard in your browser
 - `slop` opens the folder in your terminal
-- `tunes` opens the playlist
+- `tunes` opens the playlist in Spotify
 - `all` opens all three at once
 
 Changes apply the next time the panel opens. There is nothing to restart.
@@ -103,7 +105,7 @@ quicklinks append <keyword> <target>...   # add targets to a link
 quicklinks remove <keyword> [target...]   # delete a link, or only some targets
 quicklinks open <keyword> [text]          # open a link from the terminal
 quicklinks apps [query]                   # list apps
-quicklinks set terminal Ghostty           # app that opens folders
+quicklinks set terminal Ghostty           # default app for folders (a link's --with overrides it)
 quicklinks set hotkey cmd+shift+k         # change the hotkey, then restart the app
 quicklinks edit                           # open the config file
 quicklinks start                          # run the app in the background
@@ -127,7 +129,9 @@ Everything is stored in `~/.config/quicklinks/config.json`. You can edit it by h
 }
 ```
 
-A target is either a string or `{"target": "...", "with": "App"}`. Links are re-read every time the panel opens. The hotkey is only read when the app starts.
+A target is either a string or `{"target": "...", "with": "App"}`. `with` is the app that opens that one target. `terminal` is only the default app for folders that have no `with`.
+
+Links are re-read every time the panel opens. The hotkey is only read when the app starts.
 
 Hotkeys combine `cmd`, `option`, `control` or `shift` with a key (`a`-`z`, `0`-`9`, or `space`), for example `cmd+shift+k`.
 

@@ -87,6 +87,30 @@ struct WithFlagTests {
     }
 }
 
+struct TargetNormalizationTests {
+    @Test func urlsWithSlashesAreKept() throws {
+        #expect(try CLI.normalizedTarget("https://github.com") == "https://github.com")
+    }
+
+    @Test func schemeOnlyUrisAreKept() throws {
+        #expect(try CLI.normalizedTarget("spotify:playlist:123") == "spotify:playlist:123")
+        #expect(try CLI.normalizedTarget("mailto:me@example.com") == "mailto:me@example.com")
+    }
+
+    @Test func absoluteAndHomePathsAreKept() throws {
+        #expect(try CLI.normalizedTarget("/tmp") == "/tmp")
+        #expect(try CLI.normalizedTarget("~/notes") == "~/notes")
+    }
+
+    @Test func aBareWordThatIsNotAFolderIsRejected() {
+        #expect(throws: CLIError.self) { try CLI.normalizedTarget("definitely-not-a-folder-or-link") }
+    }
+
+    @Test func aColonWithNothingAfterItIsRejected() {
+        #expect(throws: CLIError.self) { try CLI.normalizedTarget("spotify:") }
+    }
+}
+
 struct HotKeyParseTests {
     @Test func modifiersAndKeyAreCombined() throws {
         let parsed = try HotKey.parse("cmd+shift+k")
