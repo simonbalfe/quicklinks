@@ -21,23 +21,72 @@ struct Link: Identifiable, Equatable {
     }
 }
 
-enum LinkSearch {
-    static func results(for text: String, in links: [Link]) -> [Link] {
+struct AppEntry: Equatable {
+    let name: String
+    let url: URL
+}
+
+enum Entry: Identifiable, Equatable {
+    case link(Link)
+    case app(AppEntry)
+
+    var id: String {
+        switch self {
+        case .link(let link): return "link:\(link.keyword)"
+        case .app(let app): return "app:\(app.url.path)"
+        }
+    }
+}
+
+enum Search {
+    private static let maxResults = 50
+
+    static func results(for text: String, links: [Link], apps: [AppEntry]) -> [Entry] {
         let trimmed = text.trimmingCharacters(in: .whitespaces)
-        if trimmed.isEmpty { return links }
-        if let exact = exactKeywordMatch(for: trimmed, in: links) { return [exact] }
+        if trimmed.isEmpty { return links.map(Entry.link) }
+        if let exact = exactKeywordMatch(for: trimmed, in: links) { return [.link(exact)] }
         let needle = trimmed.lowercased()
-        let matches = links.filter {
-            $0.keyword.lowercased().contains(needle) || $0.template.lowercased().contains(needle)
-        }
-        return matches.sorted { lhs, rhs in
-            lhs.keyword.lowercased().hasPrefix(needle) && !rhs.keyword.lowercased().hasPrefix(needle)
-        }
+        let ranked = rankedLinks(links, needle: needle) + rankedApps(apps, needle: needle)
+        return ranked
+            .sorted { ($0.rank, $0.kind, $0.title) < ($1.rank, $1.kind, $1.title) }
+            .prefix(maxResults)
+            .map(\.entry)
     }
 
     static func query(for text: String, link: Link) -> String {
         guard let parts = keywordAndQuery(text), parts.keyword == link.keyword else { return "" }
         return parts.query
+    }
+
+    private struct Ranked {
+        let entry: Entry
+        let rank: Int
+        let kind: Int
+        let title: String
+    }
+
+    private static func rankedLinks(_ links: [Link], needle: String) -> [Ranked] {
+        links.compactMap { link in
+            let rank = rank(link.keyword, needle: needle)
+                ?? (link.template.lowercased().contains(needle) ? 3 : nil)
+            return rank.map { Ranked(entry: .link(link), rank: $0, kind: 0, title: link.keyword.lowercased()) }
+        }
+    }
+
+    private static func rankedApps(_ apps: [AppEntry], needle: String) -> [Ranked] {
+        apps.compactMap { app in
+            rank(app.name, needle: needle)
+                .map { Ranked(entry: .app(app), rank: $0, kind: 1, title: app.name.lowercased()) }
+        }
+    }
+
+    private static func rank(_ name: String, needle: String) -> Int? {
+        let lowered = name.lowercased()
+        if lowered.hasPrefix(needle) { return 0 }
+        let words = lowered.split { !$0.isLetter && !$0.isNumber }
+        if words.contains(where: { $0.hasPrefix(needle) }) { return 1 }
+        if lowered.contains(needle) { return 2 }
+        return nil
     }
 
     private static func exactKeywordMatch(for text: String, in links: [Link]) -> Link? {

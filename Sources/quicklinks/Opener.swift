@@ -13,6 +13,10 @@ enum Opener {
         }
     }
 
+    static func open(_ app: AppEntry) {
+        NSWorkspace.shared.open(app.url)
+    }
+
     private static func openURL(_ link: Link, query: String) throws {
         guard let url = link.resolvedURL(query: query) else {
             throw OpenError(errorDescription: "Invalid URL for \"\(link.keyword)\": \(link.template)")

@@ -1,6 +1,6 @@
 # quicklinks
 
-Minimal macOS launcher that does only Raycast's Quicklinks. A global hotkey opens a panel listing every `keyword → target` mapping. Targets are URLs or folders; folders open in your terminal app.
+Minimal macOS launcher: Raycast's Quicklinks plus an application launcher. A global hotkey opens a panel listing every `keyword → target` mapping. Targets are URLs or folders; folders open in your terminal app. Typing also searches installed applications.
 
 ## Install
 
@@ -16,6 +16,7 @@ Builds a release binary and installs it to `~/.local/bin/quicklinks`. Run `quick
 - Type to filter by keyword or target. `↑`/`↓` select, `Enter` opens, `Esc` or clicking away closes.
 - URLs containing `{query}` take the text after the keyword: `g hello world` opens the Google search for `hello world`.
 - Targets starting with `/` or `~` are folders and open in the terminal app (default `iTerm`).
+- Installed apps (from `/Applications`, `/System/Applications`, its `Utilities` and `CoreServices/Applications`, Finder, Safari and `~/Applications`) are indexed on every open and appear when you type; `Enter` launches. Quicklinks rank ahead of apps on equal matches.
 - `⌘E` opens the config file.
 
 ## CLI
@@ -27,6 +28,7 @@ quicklinks add ws ~/workspace
 quicklinks add here .
 quicklinks remove gh
 quicklinks open ws
+quicklinks apps [query]
 quicklinks set terminal Ghostty
 quicklinks set hotkey cmd+shift+k
 quicklinks path

@@ -13,6 +13,7 @@ enum CLI {
           add <keyword> <target>       add or replace a link; target is a URL or a folder path
           remove <keyword>             delete a link
           open <keyword> [query...]    open a link now (folders open in the terminal app)
+          apps [query]                 list the applications the launcher indexes
           set hotkey <spec>            e.g. option+space, cmd+shift+k (restart the app to apply)
           set terminal <app>           e.g. iTerm, Terminal, Ghostty
           path                         print the config file path
@@ -40,6 +41,7 @@ enum CLI {
         case "add": try add(rest)
         case "remove", "rm": try remove(rest)
         case "open": try open(rest)
+        case "apps": apps(rest)
         case "set": try set(rest)
         case "path": print(ConfigStore.url.path)
         case "edit": try edit()
@@ -72,6 +74,13 @@ enum CLI {
             guard config.links.removeValue(forKey: arguments[0]) != nil else {
                 throw CLIError(message: "no link named \"\(arguments[0])\"")
             }
+        }
+    }
+
+    private static func apps(_ arguments: [String]) {
+        let needle = arguments.joined(separator: " ").lowercased()
+        for app in AppIndex.scan() where needle.isEmpty || app.name.lowercased().contains(needle) {
+            print("\(app.name)\t\(app.url.path)")
         }
     }
 

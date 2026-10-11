@@ -7,36 +7,43 @@ final class LauncherModel {
     var text = ""
     var selection = 0
     private(set) var links: [Link] = []
+    private(set) var apps: [AppEntry] = []
     private(set) var errorMessage: String?
 
     @ObservationIgnored var onDismiss: () -> Void = {}
     @ObservationIgnored private var terminalApp = Config.defaultTerminal
 
-    var visibleLinks: [Link] {
-        LinkSearch.results(for: text, in: links)
+    var visibleEntries: [Entry] {
+        Search.results(for: text, links: links, apps: apps)
     }
 
     func reset() {
         text = ""
         selection = 0
+        apps = AppIndex.scan()
         reload()
     }
 
     func move(_ delta: Int) {
-        let count = visibleLinks.count
+        let count = visibleEntries.count
         guard count > 0 else { return }
         selection = (selection + delta + count) % count
     }
 
     func openSelected() {
-        let visible = visibleLinks
+        let visible = visibleEntries
         guard visible.indices.contains(selection) else { return }
         open(visible[selection])
     }
 
-    func open(_ link: Link) {
+    func open(_ entry: Entry) {
         do {
-            try Opener.open(link, query: LinkSearch.query(for: text, link: link), terminalApp: terminalApp)
+            switch entry {
+            case .link(let link):
+                try Opener.open(link, query: Search.query(for: text, link: link), terminalApp: terminalApp)
+            case .app(let app):
+                Opener.open(app)
+            }
             onDismiss()
         } catch {
             errorMessage = error.localizedDescription
