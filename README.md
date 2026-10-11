@@ -35,8 +35,19 @@ No account, no cloud, no settings screen. One small native app and one JSON file
 
 You need a Mac running macOS 14 or newer and the Swift toolchain (`xcode-select --install` provides it).
 
+With Homebrew:
+
 ```sh
-git clone <this repository>
+brew install simonbalfe/quicklinks/quicklinks
+quicklinks start
+```
+
+To start it at login, run `brew services start quicklinks`.
+
+From source:
+
+```sh
+git clone https://github.com/simonbalfe/quicklinks
 cd quicklinks
 ./install.sh
 ```
