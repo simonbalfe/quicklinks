@@ -142,7 +142,7 @@ enum CLI {
         return (keyword, targets)
     }
 
-    private static func withApp(_ arguments: [String]) throws -> (positional: [String], app: String?) {
+    static func withApp(_ arguments: [String]) throws -> (positional: [String], app: String?) {
         var positional: [String] = []
         var app: String?
         var remaining = arguments[...]
