@@ -68,6 +68,32 @@ quicklinks add work https://github.com --with "Google Chrome"
 
 `quicklinks apps` lists the app names you can use.
 
+## Let an agent add your links
+
+The command line is plain and predictable, so a coding agent can set up a whole set of links from one sentence.
+
+You say:
+
+> add quicklinks for my supabase dashboard, my slop project folder and my spotify playlist, plus one called all that opens all three
+
+The agent runs:
+
+```sh
+quicklinks add db https://abcdefghijklmnopqrst.supabase.co
+quicklinks add slop ~/dev/slop
+quicklinks add tunes https://open.spotify.com/playlist/123
+quicklinks add all https://abcdefghijklmnopqrst.supabase.co ~/dev/slop https://open.spotify.com/playlist/123
+```
+
+Now `⌥Space`, then:
+
+- `db` opens the dashboard in your browser
+- `slop` opens the folder in your terminal
+- `tunes` opens the playlist
+- `all` opens all three at once
+
+Changes apply the next time the panel opens. There is nothing to restart.
+
 ## Commands
 
 ```sh
